@@ -10,4 +10,5 @@ bench: compile
 	perf record -o perf/scanline.data --call-graph dwarf .build/release/strip102 tiger.svg --bench
 
 bench_st_nc: compile
-	perf record -o perf/sparse-strip.data --call-graph dwarf .build/release/strip102 tiger.svg --bench --fill sparse-strip --threads 1 --no-cache
+	perf record -o perf/sparse-strip_st-nc.data --call-graph dwarf .build/release/strip102 tiger.svg --bench --fill sparse-strip --threads 1 --no-cache
+	perf record -o perf/banded_st-nc.data --call-graph dwarf .build/release/strip102 tiger.svg --bench --fill banded-scanline --threads 1 --no-cache

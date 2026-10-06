@@ -7,10 +7,16 @@ The algorithm is basically [vello cpu](https://github.com/linebender/vello/blob/
 # Benchmark
 > Outdated AND UNFAIR
 
-## This thing
+## This thing (sparse strip, st, no cache)
 ```
 bench tiger.svg x1000: total=12.424917s avg=12.425ms
   min=11.900ms p50=12.372ms p90=12.655ms p99=13.002ms max=14.234ms
+```
+
+## This thing (banded scanline, st, no cache)
+```
+bench tiger.svg x1000: total=7.428328s avg=7.428ms
+  min=6.897ms p50=7.275ms p90=7.602ms p99=11.048ms max=15.339ms
 ```
 
 ## Cairo
@@ -43,3 +49,9 @@ Target: x86_64-unknown-linux-gnu
 # Todo
 - stroke
 - think about arbitrary clipping
+
+
+- fix line binning 
+- maybe use fixed point
+
+- deal with that allocator

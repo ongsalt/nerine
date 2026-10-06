@@ -364,7 +364,7 @@ public struct Line: Sendable, Equatable {
 /// a cusp keeps failing the flatness test even as the chord shrinks to nothing, so cap the recursion
 private let maxSubdivisionDepth = 20
 
-public let defaultFlattenTolerance: Float = 0.5
+public let defaultFlattenTolerance: Float = 0.1
 
 // MARK: - Segments
 
