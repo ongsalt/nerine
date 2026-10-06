@@ -5,16 +5,14 @@ The algorithm is basically [vello cpu](https://github.com/linebender/vello/blob/
 
 
 # Benchmark
+> Outdated AND UNFAIR
 
-## Spare strip (our implementation, not vello)
+## This thing
 ```
-bench tiger.svg x1000: total=3.52965215s, avg=3.529652ms, min=2.792255ms, max=12.024770ms
+bench tiger.svg x1000: total=12.424917s avg=12.425ms
+  min=11.900ms p50=12.372ms p90=12.655ms p99=13.002ms max=14.234ms
 ```
 
-## Scanline
-```
-bench tiger.svg x1000: total=12.76478413s, avg=12.764784ms, min=12.210389ms, max=22.468483ms
-```
 ## Cairo
 ```
 bench tiger.svg x1000: total=13.12967282s, avg=13.129673ms, min=12.002300ms, max=19.617795ms
@@ -44,9 +42,4 @@ Target: x86_64-unknown-linux-gnu
 
 # Todo
 - stroke
-- correct even odd fill rule
-- fix bug when some path are offscreen
-- rect clip (viewport)
-  - still need to calculate winding number of stuff outside of this
-  - when its outside of viewport tile size can be much larger, arbitrary 
 - think about arbitrary clipping

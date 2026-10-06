@@ -6,7 +6,7 @@ let TILE_SIZE: Int = 4
 let WIDE_TILE_WIDTH: Int = 256
 
 class SparseStripRenderer {
-  let coreCount = getRealCoreCount()
+  let coreCount: Int
 
   /// one arena per worker thread: allocation is single-threaded by construction, and all
   /// frees happen on the render thread while workers are idle, so no locking anywhere
@@ -16,7 +16,8 @@ class SparseStripRenderer {
   /// it is never zeroed on handout — generateStrips zeroes the slice it needs per strip
   let scratchBuffers: [UnsafeMutableBufferPointer<Float>]
 
-  init() {
+  init(threads: Int) {
+    coreCount = threads
     coverageArenas = (0..<coreCount).map { _ in
       CoverageArena(tileCount: 1024 * 128)
     }
@@ -104,7 +105,7 @@ class SparseStripRenderer {
       let scratchBuffer = scratchBuffers[thread]
 
       let lines = ops[unchecked: i].path.breakIntoLines(
-        transform: ops[unchecked: i].transform, tolerance: 0.25)
+        transform: ops[unchecked: i].transform, tolerance: 0.1)
       let tileSet = generateTiles(lines: lines, width: width, height: height)
       let strips = generateStrips(
         tiles: tileSet.tiles.span,
@@ -130,7 +131,7 @@ class SparseStripRenderer {
 
     // wide tile is in row major for conveniece
     let wideTileCommands = generateWideTileCommands(
-      width: width, height: height, cachedStrips: entries.span, ops: ops, tileSize: TILE_SIZE)
+      width: width, height: height, cachedStrips: entries.span, ops: ops, tileSize: TILE_SIZE, threads: coreCount)
 
     let tileCount = wideTileCommands.tileCount
     let allCommands = wideTileCommands.commands.span

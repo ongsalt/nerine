@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Benchmark rendering an SVG through cairo (via librsvg), matching the
-parse-once, one-surface, clear-and-render-per-frame pattern used by the
-Swift and Rust benchmarks."""
+"""Benchmark Cairo command replay, with librsvg processing outside timing.
 
+Record the SVG once, then clear and replay onto one image surface per frame.
+The recording stores drawing operations, including fills and strokes.
+"""
+
+import math
 import sys
 import time
 
@@ -21,19 +24,25 @@ def bench(filename: str, iterations: int = DEFAULT_ITERATIONS, scale: float = 1.
     if not ok:
         # no intrinsic pixel size (e.g. viewBox-only SVG); fall back to a default viewport
         base_width, base_height = 900, 900
-    width = int(base_width * scale)
-    height = int(base_height * scale)
+    width = math.ceil(base_width * scale)
+    height = math.ceil(base_height * scale)
     viewport = Rsvg.Rectangle()
     viewport.x = 0
     viewport.y = 0
     viewport.width = width
     viewport.height = height
 
+    # Prepare the draw commands before timing, like Swift's svgDrawList.
+    # render_document already scales to the viewport; do not also scale the context.
+    recording = cairo.RecordingSurface(cairo.CONTENT_COLOR_ALPHA, (0, 0, width, height))
+    recording_ctx = cairo.Context(recording)
+    handle.render_document(recording_ctx, viewport)
+
     # surface and context live across frames, matching the Swift bench which reuses one
     # canvas; each frame is clear + render, like a real frame loop
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, width, height)
     ctx = cairo.Context(surface)
-    ctx.scale(scale, scale)
+    ctx.set_source_surface(recording, 0, 0)
 
     durations = []
     for _ in range(iterations):
@@ -42,7 +51,7 @@ def bench(filename: str, iterations: int = DEFAULT_ITERATIONS, scale: float = 1.
         ctx.set_operator(cairo.OPERATOR_CLEAR)
         ctx.paint()
         ctx.set_operator(cairo.OPERATOR_OVER)
-        handle.render_document(ctx, viewport)
+        ctx.paint()
 
         durations.append(time.perf_counter() - start)
 
@@ -52,7 +61,7 @@ def bench(filename: str, iterations: int = DEFAULT_ITERATIONS, scale: float = 1.
     maximum = max(durations)
 
     print(
-        f"bench {filename} x{iterations}: "
+        f"bench {filename} x{iterations} (Cairo recording replay): "
         f"total={total:.8f}s, avg={average * 1000:.6f}ms, "
         f"min={minimum * 1000:.6f}ms, max={maximum * 1000:.6f}ms"
     )

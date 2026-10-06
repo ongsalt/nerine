@@ -10,7 +10,7 @@ struct strip102: ParsableCommand {
     @Argument(help: "Path to the SVG file to render.")
     var file: String
 
-    @Flag(help: "Run the render pipeline 100 times with no file output, for benchmarking.")
+    @Flag(help: "Run the render pipeline 1000 times with no file output, for benchmarking.")
     var bench = false
 
     @Flag(
@@ -33,7 +33,14 @@ struct strip102: ParsableCommand {
         name: [.customShort("f"), .customLong("fill")], help: "Fill algorithm to rasterize with.")
     var fillAlgorithm: FillAlgorithm = .default
 
+    @Option(help: "Worker count for sparse-strip and banded-scanline (default: automatic). Scanline stays serial.")
+    var threads: Int?
+
     func validate() throws {
+        if let threads, threads < 1 {
+            throw ValidationError("--threads must be greater than 0.")
+        }
+
         guard scale > 0 else {
             throw ValidationError("--scale must be greater than 0.")
         }
@@ -45,9 +52,9 @@ struct strip102: ParsableCommand {
         } else {
             if bench {
                 benchSvg(
-                    file, scale: scale, algorithm: fillAlgorithm, invalidateEveryFrame: noCache)
+                    file, scale: scale, algorithm: fillAlgorithm, threads: threads, invalidateEveryFrame: noCache)
             } else {
-                importSvg(file, scale: scale, algorithm: fillAlgorithm, output: output)
+                importSvg(file, scale: scale, algorithm: fillAlgorithm, output: output, threads: threads)
             }
         }
     }
@@ -69,7 +76,7 @@ struct strip102: ParsableCommand {
         // path.line(to: Point(4, 4) + offset)
         // path.line(to: Point(0, 4) + offset)
 
-        var canvas = Canvas(width: 1000, height: 1000, fillAlgorithm: algorithm)
+        var canvas = Canvas(width: 1000, height: 1000, fillAlgorithm: algorithm, threads: threads)
         canvas.draw(path, color: .blue)
         canvas.flush()
         try! canvas.save(to: "idk.png")

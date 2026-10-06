@@ -19,13 +19,14 @@ func generateWideTileCommands(
   height: Int,
   cachedStrips: Span<SparseStripRenderer.CachedStrips?>,
   ops: Span<DrawOp>,
-  tileSize: Int
+  tileSize: Int,
+  threads: Int
 ) -> WideTileCommands {
   let wideTileXCount = Int((Float(width) / Float(WIDE_TILE_WIDTH)).rounded(.up))
   let wideTileYCount = Int((Float(height) / Float(TILE_SIZE)).rounded(.up))
   let tileCount = wideTileXCount * wideTileYCount
 
-  let threadCount = max(1, min(getRealCoreCount(), wideTileYCount))
+  let threadCount = max(1, min(threads, wideTileYCount))
   let rowChunk = (wideTileYCount + threadCount - 1) / threadCount
 
   // Pass 1: count commands per wide tile (same splitting logic as pass 3, tallying only), so

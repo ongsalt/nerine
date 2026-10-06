@@ -92,7 +92,11 @@ func bandLines(_ lines: consuming [Line], height: Int) -> BandedLines {
 /// Coverage semantics match `fillScanline` exactly, including its handling of geometry that runs
 /// off the left edge: a line left of x = 0 contributes no winding to the visible columns.
 final class BandedScanlineRenderer: @unchecked Sendable {
-  let coreCount = getRealCoreCount()
+  let coreCount: Int
+
+  init(threads: Int) {
+    coreCount = threads
+  }
 
   private struct CacheKey: Hashable {
     let pathId: Path.ID

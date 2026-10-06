@@ -23,17 +23,18 @@ public struct Canvas: ~Copyable {
 
   /// Lives as long as the canvas so the strip cache carries over between flushes;
   /// lazy so a scanline-only canvas never pays for the coverage arenas.
-  private lazy var sparseStripRenderer = SparseStripRenderer()
+  private lazy var sparseStripRenderer = SparseStripRenderer(threads: threadCount)
 
   /// same deal: kept alive across flushes for its band cache, lazy so the other modes
   /// never pay for its scratch buffers
-  private lazy var bandedScanlineRenderer = BandedScanlineRenderer()
+  private lazy var bandedScanlineRenderer = BandedScanlineRenderer(threads: threadCount)
 
   /// The current transformation matrix, applied to every path recorded from now on.
   public var transform: Affine
 
   private var transformStack: [Affine] = []
   private var ops: [DrawOp] = []
+  private let threadCount: Int
 
   /// Draws recorded but not yet rasterized.
   public var pendingCount: Int { ops.count }
@@ -42,9 +43,12 @@ public struct Canvas: ~Copyable {
     width: Int,
     height: Int,
     fillAlgorithm: FillAlgorithm = .default,
-    transform: Affine = .identity
+    transform: Affine = .identity,
+    threads: Int? = nil
   ) {
     precondition(width > 0 && height > 0, "canvas must have a positive size")
+    precondition(threads == nil || threads! > 0, "threads must be positive")
+    self.threadCount = threads ?? max(1, getRealCoreCount())
     self.width = width
     self.height = height
     self.fillAlgorithm = fillAlgorithm

@@ -11,6 +11,12 @@ func svgDrawList(
   var index = 0
 
   while shape != nil {
+    if shape!.pointee.fill.type == NSVG_PAINT_NONE.rawValue {
+      shape = shape!.pointee.next
+      index += 1
+      continue
+    }
+
     // nanosvg packs color as 0xAABBGGRR, not the 0xRRGGBB our Color(hex:) expects
     let rawColor = shape!.pointee.fill.color
     let r = (rawColor >> 0) & 0xFF
@@ -59,12 +65,13 @@ func rasterizeSvg(
   _ image: UnsafeMutablePointer<NSVGimage>,
   scale: Float = 1.0,
   algorithm: FillAlgorithm = .default,
+  threads: Int? = nil,
   verbose: Bool = true
 ) -> Canvas {
   let width = Int((image.pointee.width * scale).rounded(.up))
   let height = Int((image.pointee.height * scale).rounded(.up))
 
-  var canvas = Canvas(width: width, height: height, fillAlgorithm: algorithm)
+  var canvas = Canvas(width: width, height: height, fillAlgorithm: algorithm, threads: threads)
   canvas.scale(x: scale, y: scale)
 
   for (path, color) in svgDrawList(image, verbose: verbose) {
@@ -85,7 +92,7 @@ func parseSvg(_ filename: String) -> UnsafeMutablePointer<NSVGimage> {
 
 func importSvg(
   _ filename: String, scale: Float = 1.0, algorithm: FillAlgorithm = .default,
-  output: String? = nil
+  output: String? = nil, threads: Int? = nil
 ) {
   let clock = ContinuousClock()
   let start = clock.now
@@ -93,7 +100,7 @@ func importSvg(
   let parsed = parseSvg(filename)
   defer { nsvgDelete(parsed) }
 
-  var canvas = rasterizeSvg(parsed, scale: scale, algorithm: algorithm)
+  var canvas = rasterizeSvg(parsed, scale: scale, algorithm: algorithm, threads: threads)
 
   let pngPath =
     output

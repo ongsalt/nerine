@@ -10,6 +10,7 @@ func benchSvg(
   scale: Float = 1.0,
   algorithm: FillAlgorithm = .default,
   iterations: Int = 1000,
+  threads: Int? = nil,
   /// marks every path dirty each frame, so caches never hit. Models animating geometry, where
   /// the rasterization the cache normally hides has to be paid every frame
   invalidateEveryFrame: Bool = false
@@ -21,7 +22,7 @@ func benchSvg(
 
   let width = Int((parsed.pointee.width * scale).rounded(.up))
   let height = Int((parsed.pointee.height * scale).rounded(.up))
-  var canvas = Canvas(width: width, height: height, fillAlgorithm: algorithm)
+  var canvas = Canvas(width: width, height: height, fillAlgorithm: algorithm, threads: threads)
   canvas.scale(x: scale, y: scale)
 
   let clock = ContinuousClock()
